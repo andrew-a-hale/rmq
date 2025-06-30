@@ -4,3 +4,5 @@
 - [] LOGGING
 - [] ERROR HANDLING
 - [] TRANSACTIONS
+- [] TYPER?
+- [] STREAMLIT?
