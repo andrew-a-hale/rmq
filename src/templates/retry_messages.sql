@@ -6,15 +6,14 @@ set
 from (
     select id
     from {name}
-    where 
-        status = %(new)s
-        and current_timestamp >= dateadd(minute, delay, inserted_at)
+    where status = %(failed)s
     order by priority desc, inserted_at desc
-    limit %(limit)s
+    limit %(n)s
 ) rm
 where {name}.id = rm.id;
+
 
 select *
 from {name}
 where status = %(processing)s
-limit %(limit)s;
+limit %(n)s;

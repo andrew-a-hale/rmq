@@ -3,7 +3,7 @@ import dataclasses
 import enum
 import json
 import uuid
-from typing import Any, Self
+from typing import Any, Callable, Self
 
 
 class Priority(enum.Enum):
@@ -32,7 +32,7 @@ type MessageId = uuid.UUID
 class Message:
     id: MessageId
     message_type: enum.Enum
-    data: dict[str, Any]
+    payload: dict[str, Any]
     priority: Priority
     delay: int = 0  # minutes
     attempts: int = 0
@@ -53,7 +53,7 @@ class MessageQueue(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def consume(self, n: int = 1) -> list[Message]:
+    def consume(self, n: int) -> list[Message]:
         pass
 
     @abc.abstractmethod
@@ -61,7 +61,15 @@ class MessageQueue(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def retry(self, ids: list[MessageId]) -> list[MessageId]:
+    def retry(self, n: int) -> list[Message]:
+        pass
+
+    @abc.abstractmethod
+    def retry_by_id(self, ids: list[MessageId]) -> list[Message]:
+        pass
+
+    @abc.abstractmethod
+    def retry_dlq(self, n: int) -> list[Message]:
         pass
 
     @abc.abstractmethod
@@ -70,4 +78,12 @@ class MessageQueue(abc.ABC):
 
     @abc.abstractmethod
     def dlq(self, n: int) -> list[Message]:
+        pass
+
+    @abc.abstractmethod
+    def execute(self, message: Message, handler: Callable) -> None:
+        pass
+
+    @abc.abstractmethod
+    def complete(self, id: MessageId) -> None:
         pass

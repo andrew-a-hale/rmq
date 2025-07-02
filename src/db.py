@@ -11,7 +11,7 @@ class DatabaseConnector(abc.ABC):
         template_name: str,
         params: Optional[dict[str, Any]] = None,
         network_timeout: int = 30,
-        fetch: bool = False,
+        fetch: int = -1,
     ):
         pass
 
@@ -20,7 +20,7 @@ class DatabaseConnector(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def initialise_mq(self, name: str):
+    def initialise_mq(self):
         """Create Message Queue and Dead Letter Queue Tables."""
         pass
 
@@ -41,7 +41,15 @@ class DatabaseConnector(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def retry_messages(self, ids: list[MessageId]) -> list[MessageId]:
+    def retry_messages(self, n: int) -> list[Message]:
+        pass
+
+    @abc.abstractmethod
+    def retry_messages_by_id(self, ids: list[MessageId]) -> list[Message]:
+        pass
+
+    @abc.abstractmethod
+    def retry_dlq_messages(self, n: int) -> list[Message]:
         pass
 
     @abc.abstractmethod
@@ -50,4 +58,12 @@ class DatabaseConnector(abc.ABC):
 
     @abc.abstractmethod
     def clean_mq(self) -> None:
+        pass
+
+    @abc.abstractmethod
+    def complete_message(self, id: MessageId) -> None:
+        pass
+
+    @abc.abstractmethod
+    def fail_message(self, id: MessageId) -> None:
         pass

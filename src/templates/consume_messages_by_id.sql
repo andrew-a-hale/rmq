@@ -6,11 +6,10 @@ set
 from (
     select id
     from {name}
-    where 
+    where
         status = %(new)s
         and current_timestamp >= dateadd(minute, delay, inserted_at)
-    order by priority desc, inserted_at desc
-    limit %(limit)s
+        and id in (%(ids)s) 
 ) rm
 where {name}.id = rm.id;
 

@@ -1,2 +1,2 @@
 from .mq import MessageQueue, Message, MessageType, MessageId, Status
-from .db import Db
+from .db import DatabaseConnector

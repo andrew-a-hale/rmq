@@ -1,5 +1,8 @@
+import uuid
+
 import tomllib
-from src import snowflake_mq
+
+from src import mq, snowflake_mq
 
 
 def main():
@@ -7,9 +10,21 @@ def main():
         conn_params = tomllib.load(toml).get("default")
         assert isinstance(conn_params, dict)
 
-    db = snowflake_mq.Db(name="message_queue", conn_params=conn_params)
-    mq = snowflake_mq.Mq(db)
-    mq.dlq()
+    sf = snowflake_mq.Db(name="message_queue", conn_params=conn_params, fresh=True)
+    queue = snowflake_mq.Mq(sf)
+
+    message = mq.Message(
+        uuid.uuid4(),
+        mq.MessageType.ModelOne,
+        {"data": "!"},
+        mq.Priority.IMMEDIATE,
+    )
+    queue.publish([message])
+    queue.statuses([message.id])
+    messages = queue.consume()
+    queue.execute(messages[0], lambda x: x)
+    queue.statuses([message.id])
+    queue.clean()
 
 
 if __name__ == "__main__":

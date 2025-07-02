@@ -1,7 +1,11 @@
+update {name}
+set status = %(failed)s
+where status = %(processing)s;
+
 insert into {dlq}
 select *
-from {mq}
-where attempts >= max_attempts;
+from {name}
+where attempts >= max_attempts and status != %(completed)s;
 
-delete from {mq}
-where attempts >= max_attempts;
+delete from {name}
+where attempts >= max_attempts and status != %(completed)s;

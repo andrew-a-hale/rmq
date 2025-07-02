@@ -1,24 +1,27 @@
--- Publish messages template
--- Inserts new messages into the queue with initial status and timestamp
 insert into {name} (
-    id, 
-    message_type, 
-    data, 
-    status, 
-    priority, 
-    delay, 
-    attempts, 
-    max_attempts, 
-    inserted_at
+  id,
+  message_type,
+  payload,
+  status,
+  priority,
+  delay,
+  attempts,
+  max_attempts,
+  inserted_at,
+  last_started_at,
+  completed_at,
+  failed_at
 )
-values (
-    :id, 
-    :message_type, 
-    :data, 
-    'NEW', 
-    :priority, 
-    :delay, 
-    0, 
-    :max_attempts, 
-    current_timestamp
-);
+select
+    %(id)s, 
+    %(message_type)s, 
+    parse_json(%(payload)s), 
+    %(new)s,
+    %(priority)s, 
+    %(delay)s, 
+    0,
+    %(max_attempts)s,
+    current_timestamp,
+    null,
+    null,
+    null;
