@@ -1,8 +1,3 @@
-# TODO
+# Relational Message Queue
 
-- [] SNOWFLAKE IMPL
-- [] LOGGING
-- [] ERROR HANDLING
-- [] TRANSACTIONS
-- [] TYPER?
-- [] STREAMLIT?
+Writing a Message Queue for SQL Databases.
