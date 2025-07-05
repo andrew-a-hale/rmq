@@ -1,17 +1,19 @@
+import asyncio
 import uuid
 
 import tomllib
 
-from src import mq, snowflake_mq
+from src import mq
+from src.sf import mq as rmq
 
 
-def main():
+async def main():
     with open(".snowflake/connections.toml", mode="rb") as toml:
-        conn_params = tomllib.load(toml).get("default")
+        conn_params = tomllib.load(toml).get("mq")
         assert isinstance(conn_params, dict)
 
-    sf = snowflake_mq.Db(name="message_queue", conn_params=conn_params, fresh=True)
-    queue = snowflake_mq.Mq(sf)
+    sf = rmq.Db(name="message_queue", conn_params=conn_params, fresh=True)
+    queue = rmq.Mq(sf)
 
     message = mq.Message(
         uuid.uuid4(),
@@ -19,13 +21,33 @@ def main():
         {"data": "!"},
         mq.Priority.IMMEDIATE,
     )
-    queue.publish([message])
+    another = mq.Message(
+        uuid.uuid4(),
+        mq.MessageType.ModelTwo,
+        {"data": "?"},
+        mq.Priority.IMMEDIATE,
+    )
+    queue.publish([message, another])
     queue.statuses([message.id])
-    messages = queue.consume()
-    queue.execute(messages[0], lambda x: x)
-    queue.statuses([message.id])
+
+    messages = queue.consume(2)
+
+    async def handler(x: mq.Message):
+        print("executing!")
+        print("Message: ", x.deserialise(True))
+        return x
+
+    jobs = []
+    for message in messages:
+        print("started: ", message.id)
+        jobs.append(queue.execute(message, handler))
+
+    print(queue.statuses([message.id for message in messages]))
+    await asyncio.gather(*jobs)
+    print(queue.statuses([message.id for message in messages]))
+
     queue.clean()
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

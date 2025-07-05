@@ -8,7 +8,7 @@ from snowflake import connector
 from snowflake.connector.result_set import ResultSet
 
 from src.db import DatabaseConnector
-from src.mq import Message, MessageId, MessageQueue, MessageType, Priority, Status
+from src.mq import Message, MessageQueue, MessageType, Priority, Status
 
 PATH = os.path.dirname(__file__)
 
@@ -99,7 +99,7 @@ class Db(DatabaseConnector):
             exists = "if not exists"
             self.clean_mq()
 
-    def publish_messages(self, messages: list[Message]) -> list[MessageId]:
+    def publish_messages(self, messages: list[Message]) -> list[uuid.UUID]:
         """Publish messages to the Snowflake message queue."""
         published_ids = []
         logger.info(f"Publishing {len(messages)} messages to queue")
@@ -162,7 +162,7 @@ class Db(DatabaseConnector):
 
         return consumed_messages
 
-    def consume_messages_by_id(self, ids: list[MessageId]) -> list[Message]:
+    def consume_messages_by_id(self, ids: list[uuid.UUID]) -> list[Message]:
         """Consume messages from the Snowflake message queue."""
         consumed_messages = []
 
@@ -231,7 +231,7 @@ class Db(DatabaseConnector):
 
         return retry_messages
 
-    def retry_messages_by_id(self, ids: list[MessageId]) -> list[Message]:
+    def retry_messages_by_id(self, ids: list[uuid.UUID]) -> list[Message]:
         """Retry messages from the Snowflake message queue."""
         retry_messages = []
 
@@ -301,7 +301,7 @@ class Db(DatabaseConnector):
 
         return retry_messages
 
-    def message_statuses(self, ids: list[MessageId]) -> list[tuple[MessageId, Status]]:
+    def message_statuses(self, ids: list[uuid.UUID]) -> list[tuple[uuid.UUID, Status]]:
         """Message statuses from the Snowflake message queue."""
         try:
             rows = self._execute_query(
@@ -365,7 +365,7 @@ class Db(DatabaseConnector):
         except Exception as e:
             logger.error(f"Error cleaning the message queue: {e}", exc_info=True)
 
-    def complete_message(self, id: MessageId) -> None:
+    def complete_message(self, id: uuid.UUID) -> None:
         """Mark a message as completed from the Snowflake message queue."""
         try:
             self._execute_query(
@@ -378,7 +378,7 @@ class Db(DatabaseConnector):
         except Exception as e:
             logger.error(f"Error completing messages: {e}", exc_info=True)
 
-    def fail_message(self, id: MessageId) -> None:
+    def fail_message(self, id: uuid.UUID) -> None:
         """Mark a message as completed from the Snowflake message queue."""
         try:
             self._execute_query(
@@ -396,13 +396,13 @@ class Mq(MessageQueue):
     def __init__(self, db: Db):
         self.db = db
 
-    def publish(self, messages: list[Message]) -> list[MessageId]:
+    def publish(self, messages: list[Message]) -> list[uuid.UUID]:
         return self.db.publish_messages(messages)
 
     def consume(self, n: int = 1) -> list[Message]:
         return self.db.consume_messages(n)
 
-    def consume_by_id(self, ids: list[MessageId]) -> list[Message]:
+    def consume_by_id(self, ids: list[uuid.UUID]) -> list[Message]:
         if len(ids) == 0:
             return []
         return self.db.consume_messages_by_id(ids)
@@ -410,7 +410,7 @@ class Mq(MessageQueue):
     def retry(self, n: int = 1) -> list[Message]:
         return self.db.retry_messages(n)
 
-    def retry_by_id(self, ids: list[MessageId]) -> list[Message]:
+    def retry_by_id(self, ids: list[uuid.UUID]) -> list[Message]:
         if len(ids) == 0:
             return []
         return self.db.retry_messages_by_id(ids)
@@ -418,7 +418,7 @@ class Mq(MessageQueue):
     def retry_dlq(self, n: int = 1) -> list[Message]:
         return self.db.retry_dlq_messages(n)
 
-    def statuses(self, ids: list[MessageId]) -> list[tuple[MessageId, Status]]:
+    def statuses(self, ids: list[uuid.UUID]) -> list[tuple[uuid.UUID, Status]]:
         if len(ids) == 0:
             return []
         return self.db.message_statuses(ids)
@@ -430,15 +430,15 @@ class Mq(MessageQueue):
     def clean(self) -> None:
         self.db.clean_mq()
 
-    def complete(self, id: MessageId) -> None:
+    def complete(self, id: uuid.UUID) -> None:
         self.db.complete_message(id)
 
-    def fail(self, id: MessageId) -> None:
+    def fail(self, id: uuid.UUID) -> None:
         self.db.fail_message(id)
 
-    def execute(self, message: Message, handler: Callable):
+    async def execute(self, message: Message, handler: Callable):
         try:
-            handler(message)
+            _ = await handler(message)
         except Exception as e:
             logger.error(
                 f"Error: failed to call handler function on message: {message} with {e}",

@@ -1,7 +1,8 @@
 import abc
+import uuid
 from typing import Any, Optional
 
-from src.mq import Message, MessageId, Status
+from src.mq import Message, Status
 
 
 class DatabaseConnector(abc.ABC):
@@ -25,7 +26,7 @@ class DatabaseConnector(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def publish_messages(self, messages: list[Message]) -> list[MessageId]:
+    def publish_messages(self, messages: list[Message]) -> list[uuid.UUID]:
         pass
 
     @abc.abstractmethod
@@ -33,11 +34,11 @@ class DatabaseConnector(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def consume_messages_by_id(self, ids: list[MessageId]) -> list[Message]:
+    def consume_messages_by_id(self, ids: list[uuid.UUID]) -> list[Message]:
         pass
 
     @abc.abstractmethod
-    def message_statuses(self, ids: list[MessageId]) -> list[tuple[MessageId, Status]]:
+    def message_statuses(self, ids: list[uuid.UUID]) -> list[tuple[uuid.UUID, Status]]:
         pass
 
     @abc.abstractmethod
@@ -45,7 +46,7 @@ class DatabaseConnector(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def retry_messages_by_id(self, ids: list[MessageId]) -> list[Message]:
+    def retry_messages_by_id(self, ids: list[uuid.UUID]) -> list[Message]:
         pass
 
     @abc.abstractmethod
@@ -61,9 +62,9 @@ class DatabaseConnector(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def complete_message(self, id: MessageId) -> None:
+    def complete_message(self, id: uuid.UUID) -> None:
         pass
 
     @abc.abstractmethod
-    def fail_message(self, id: MessageId) -> None:
+    def fail_message(self, id: uuid.UUID) -> None:
         pass
