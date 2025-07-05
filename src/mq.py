@@ -62,6 +62,9 @@ class Message:
     @staticmethod
     def serialise(message: str) -> Self:
         parsed = json.loads(message)
+        parsed["id"] = uuid.UUID(parsed["id"])
+        parsed["message_type"] = MessageType(parsed["message_type"])
+        parsed["priority"] = Priority(int(parsed["priority"]))
         return Message(**parsed)
 
 
