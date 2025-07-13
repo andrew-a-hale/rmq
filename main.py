@@ -4,7 +4,7 @@ import uuid
 import tomllib
 
 from src import mq
-from src.sf import mq as rmq
+from src.sf import mq as sfmq
 
 
 async def main():
@@ -12,8 +12,8 @@ async def main():
         conn_params = tomllib.load(toml).get("mq")
         assert isinstance(conn_params, dict)
 
-    sf = rmq.Db(name="message_queue", conn_params=conn_params, fresh=True)
-    queue = rmq.Mq(sf)
+    sf = sfmq.Db(name="message_queue", conn_params=conn_params, fresh=True)
+    queue = sfmq.Mq(sf)
 
     message = mq.Message(
         uuid.uuid4(),
